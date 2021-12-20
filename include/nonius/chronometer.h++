@@ -46,6 +46,8 @@ namespace nonius {
 
         int runs() const { return k; }
 
+        detail::chronometer_concept* impl;
+
         chronometer(detail::chronometer_concept& meter, int k, const parameters& p)
             : impl(&meter)
             , k(k)
@@ -68,8 +70,6 @@ namespace nonius {
             for(int i = 0; i < k; ++i) fun(i);
             impl->finish();
         }
-
-        detail::chronometer_concept* impl;
         int k;
         const parameters* params;
     };
