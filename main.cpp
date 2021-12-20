@@ -7,6 +7,8 @@
 
 #include <nonius/nonius.h++>
 
+nonius::Duration<nonius::default_clock> ** matrix;
+
 enum State
 {
   Preparing,
@@ -84,6 +86,8 @@ struct LatencyBench
       sync.set(Ping);
       sync.wait_until(Pong);
     });
+    
+    matrix[first_cpu][second_cpu - 1] = matrix[second_cpu][first_cpu] = meter.impl->elapsed();
 
     sync.set(Finish);
     t.join();
@@ -96,6 +100,12 @@ struct LatencyBench
 int main()
 {
   const long num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+  
+    matrix = new nonius::Duration<nonius::default_clock> * [num_cpus];
+    for (int i = 0; i < num_cpus; i++)
+    {
+        matrix[i] = new nonius::Duration<nonius::default_clock>[num_cpus - 1];
+    }
 
   for (long i = 0; i < num_cpus; ++i)
     for (long j = i + 1; j < num_cpus; ++j)
@@ -106,6 +116,28 @@ int main()
   try
   {
     nonius::go(nonius::configuration{});
+    
+    for (int i = 0; i < num_cpus; i++)
+    {
+        for (int j = 0; j < num_cpus - 1; j++)
+        {
+            if (j == i)
+                std::cout << "-;";
+            std::cout << matrix[i][j];
+            if (j != num_cpus - 2)
+                std::cout << ";";
+        }
+        if (i != num_cpus - 1)
+            std::cout << std::endl;
+    }
+    std::cout << ";-" << std::endl;
+    
+    for (int i = 0; i < num_cpus; i++)
+    {
+        delete[] matrix[i];
+    }
+    delete[] matrix;
+    
     return 0;
   }
   catch (const std::exception& exc)
