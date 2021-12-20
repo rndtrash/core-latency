@@ -6,6 +6,7 @@
 #include <thread>
 
 #include <nonius/nonius.h++>
+#include <nonius/chronometer.h++>
 
 nonius::Duration<nonius::default_clock> ** matrix;
 
@@ -87,7 +88,7 @@ struct LatencyBench
       sync.wait_until(Pong);
     });
     
-    matrix[first_cpu][second_cpu - 1] = matrix[second_cpu][first_cpu] = meter.impl->elapsed();
+    matrix[first_cpu][second_cpu - 1] = matrix[second_cpu][first_cpu] = ((nonius::detail::chronometer_model<nonius::default_clock>*) meter.impl)->elapsed();
 
     sync.set(Finish);
     t.join();
@@ -99,7 +100,7 @@ struct LatencyBench
 
 int main()
 {
-  const long num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+  const long num_cpus = 8;// sysconf(_SC_NPROCESSORS_ONLN);
   
     matrix = new nonius::Duration<nonius::default_clock> * [num_cpus];
     for (int i = 0; i < num_cpus; i++)
@@ -123,7 +124,7 @@ int main()
         {
             if (j == i)
                 std::cout << "-;";
-            std::cout << matrix[i][j];
+            std::cout << matrix[i][j].count();
             if (j != num_cpus - 2)
                 std::cout << ";";
         }
