@@ -1,6 +1,8 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include <iostream>
+#include <chrono>
 #include <atomic>
 #include <exception>
 #include <thread>
@@ -114,7 +116,7 @@ int main()
 		long long average = 0;
 		for (int k = 0; k < num_of_runs; k++)
 			average = LatencyBench(i, j) / num_of_runs;
-		matrix[first_cpu][second_cpu - 1] = matrix[second_cpu][first_cpu] = average;
+		matrix[i][j - 1] = matrix[j][i] = average;
 	}
 	
 	for (int i = 0; i < num_cpus; i++)
