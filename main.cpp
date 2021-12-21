@@ -104,7 +104,8 @@ int main()
         "latency between CPU " + std::to_string(i) + " and " + std::to_string(j),
         LatencyBench(i, j));
 
-  nonius::configuration cfg = {.reporter="csv"};
+  nonius::configuration cfg = {};
+  cfg.reporter = "csv";
   try
   {
     nonius::go(cfg);
