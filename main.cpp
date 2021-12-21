@@ -85,8 +85,6 @@ struct LatencyBench
       sync.wait_until(Pong);
     });
     
-    matrix[first_cpu][second_cpu - 1] = matrix[second_cpu][first_cpu] = ((nonius::detail::chronometer_model<nonius::default_clock>*) meter.impl)->elapsed();
-
     sync.set(Finish);
     t.join();
   }
@@ -106,9 +104,10 @@ int main()
         "latency between CPU " + std::to_string(i) + " and " + std::to_string(j),
         LatencyBench(i, j));
 
+  nonius::configuration cfg = {.reporter="csv"};
   try
   {
-    nonius::go(nonius::configuration{.reporter="csv"});
+    nonius::go(cfg);
     
     return 0;
   }
