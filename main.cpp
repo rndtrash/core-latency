@@ -115,7 +115,7 @@ int main()
 	{
 		long long average = 0;
 		for (int k = 0; k < num_of_runs; k++)
-			average = LatencyBench(i, j)() / num_of_runs;
+			average += LatencyBench(i, j)() / num_of_runs;
 		matrix[i][j - 1] = matrix[j][i] = average;
 	}
 	
