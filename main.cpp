@@ -6,6 +6,7 @@
 #include <atomic>
 #include <exception>
 #include <thread>
+#include <ctime>
 
 const int num_of_runs = 8;
 long long ** matrix;
@@ -83,16 +84,17 @@ struct LatencyBench
 
     sync.wait_until(Ready);
 
-	auto start = std::chrono::high_resolution_clock::now();
+	struct timespec ts, te;
+    timespec_get(&ts, TIME_UTC);
     {
       sync.set(Ping);
       sync.wait_until(Pong);
     };
-	auto end = std::chrono::high_resolution_clock::now();
+    timespec_get(&te, TIME_UTC);
     
     sync.set(Finish);
     t.join();
-	return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+	return te.tv_nsec - ts.tv_nsec;
   }
 
   const long first_cpu;
