@@ -6,9 +6,6 @@
 #include <thread>
 
 #include <nonius/nonius.h++>
-#include <nonius/chronometer.h++>
-
-nonius::Duration<nonius::default_clock> ** matrix;
 
 enum State
 {
@@ -100,15 +97,10 @@ struct LatencyBench
 
 int main()
 {
+	const long padding_cpus = 0;
   const long num_cpus = 8;// sysconf(_SC_NPROCESSORS_ONLN);
-  
-    matrix = new nonius::Duration<nonius::default_clock> * [num_cpus];
-    for (int i = 0; i < num_cpus; i++)
-    {
-        matrix[i] = new nonius::Duration<nonius::default_clock>[num_cpus - 1];
-    }
 
-  for (long i = 0; i < num_cpus; ++i)
+  for (long i = padding_cpus; i < num_cpus; ++i)
     for (long j = i + 1; j < num_cpus; ++j)
       nonius::global_benchmark_registry().emplace_back(
         "latency between CPU " + std::to_string(i) + " and " + std::to_string(j),
@@ -116,28 +108,7 @@ int main()
 
   try
   {
-    nonius::go(nonius::configuration{});
-    
-    for (int i = 0; i < num_cpus; i++)
-    {
-        for (int j = 0; j < num_cpus - 1; j++)
-        {
-            if (j == i)
-                std::cout << "-;";
-            std::cout << matrix[i][j].count();
-            if (j != num_cpus - 2)
-                std::cout << ";";
-        }
-        if (i != num_cpus - 1)
-            std::cout << std::endl;
-    }
-    std::cout << ";-" << std::endl;
-    
-    for (int i = 0; i < num_cpus; i++)
-    {
-        delete[] matrix[i];
-    }
-    delete[] matrix;
+    nonius::go(nonius::configuration{.reporter="csv"});
     
     return 0;
   }
