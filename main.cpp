@@ -5,7 +5,8 @@
 #include <exception>
 #include <thread>
 
-#include <nonius/nonius.h++>
+const num_of_runs = 8;
+long long ** matrix;
 
 enum State
 {
@@ -59,7 +60,7 @@ struct LatencyBench
   {
   }
 
-  void operator()(nonius::chronometer meter) const
+  long long operator()(nonius::chronometer meter) const
   {
     Sync sync;
 
@@ -80,13 +81,16 @@ struct LatencyBench
 
     sync.wait_until(Ready);
 
-    meter.measure([&] {
+	auto start = std::chrono::high_resolution_clock::now();
+    {
       sync.set(Ping);
       sync.wait_until(Pong);
-    });
+    };
+	auto end = std::chrono::high_resolution_clock::now();
     
     sync.set(Finish);
     t.join();
+	return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
   }
 
   const long first_cpu;
@@ -97,29 +101,42 @@ int main()
 {
 	const long padding_cpus = 0;
   const long num_cpus = 8;// sysconf(_SC_NPROCESSORS_ONLN);
+  
+      matrix = new long long * [num_cpus];
+    for (int i = 0; i < num_cpus; i++)
+    {
+        matrix[i] = new long long[num_cpus - 1];
+    }
 
   for (long i = padding_cpus; i < num_cpus; ++i)
     for (long j = i + 1; j < num_cpus; ++j)
-      nonius::global_benchmark_registry().emplace_back(
-        "latency between CPU " + std::to_string(i) + " and " + std::to_string(j),
-        LatencyBench(i, j));
+	{
+		long long average = 0;
+		for (int k = 0; k < num_of_runs; k++)
+			average = LatencyBench(i, j) / num_of_runs;
+		matrix[first_cpu][second_cpu - 1] = matrix[second_cpu][first_cpu] = average;
+	}
+	
+	for (int i = 0; i < num_cpus; i++)
+    {
+        for (int j = 0; j < num_cpus - 1; j++)
+        {
+            if (j == i)
+                std::cout << ",";
+            std::cout << matrix[i][j];
+            if (j != num_cpus - 2)
+                std::cout << ",";
+        }
+        if (i != num_cpus - 1)
+            std::cout << std::endl;
+    }
+    std::cout << "," << std::endl;
 
-  nonius::configuration cfg = {};
-  cfg.reporter = "csv";
-  try
-  {
-    nonius::go(cfg);
-    
-    return 0;
-  }
-  catch (const std::exception& exc)
-  {
-    std::cerr << "Error: " << exc.what() << '\n';
-    return 1;
-  }
-  catch (...)
-  {
-    std::cerr << "Unknown error\n";
-    return 1;
-  }
+    for (int i = 0; i < num_cpus; i++)
+    {
+        delete[] matrix[i];
+    }
+    delete[] matrix;
+	
+	return 0;
 }
