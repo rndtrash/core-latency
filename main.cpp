@@ -85,12 +85,12 @@ struct LatencyBench
     sync.wait_until(Ready);
 
 	struct timespec ts, te;
-    timespec_get(&ts, TIME_UTC);
+    clock_getres(CLOCK_REALTIME, &ts);
     {
       sync.set(Ping);
       sync.wait_until(Pong);
     };
-    timespec_get(&te, TIME_UTC);
+    clock_getres(CLOCK_REALTIME, &te);
     
     sync.set(Finish);
     t.join();
